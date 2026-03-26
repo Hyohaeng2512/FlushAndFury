@@ -51,6 +51,9 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Subscribe<EnemyBlockGained>(OnEnemyBlockGained);
             eventBus.Subscribe<EnemyDebuffApplied>(OnEnemyDebuffApplied);
             eventBus.Subscribe<TurnSnapshotRecorded>(OnTurnSnapshotRecorded);
+            eventBus.Subscribe<CombatStatusApplied>(OnCombatStatusApplied);
+            eventBus.Subscribe<CombatStatusExpired>(OnCombatStatusExpired);
+            eventBus.Subscribe<CombatStatusTickDamage>(OnCombatStatusTickDamage);
 
             isSubscribed = true;
         }
@@ -81,6 +84,9 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Unsubscribe<EnemyBlockGained>(OnEnemyBlockGained);
             eventBus.Unsubscribe<EnemyDebuffApplied>(OnEnemyDebuffApplied);
             eventBus.Unsubscribe<TurnSnapshotRecorded>(OnTurnSnapshotRecorded);
+            eventBus.Unsubscribe<CombatStatusApplied>(OnCombatStatusApplied);
+            eventBus.Unsubscribe<CombatStatusExpired>(OnCombatStatusExpired);
+            eventBus.Unsubscribe<CombatStatusTickDamage>(OnCombatStatusTickDamage);
 
             isSubscribed = false;
         }
@@ -178,6 +184,21 @@ namespace FlushAndFury.Presentation.Battle
         private void OnTurnSnapshotRecorded(TurnSnapshotRecorded signal)
         {
             Debug.Log($"[CombatDebugListener] TurnSnapshot source={signal.Source} turn={signal.TurnIndex} owner={signal.Owner} phase={signal.Phase}");
+        }
+
+        private void OnCombatStatusApplied(CombatStatusApplied signal)
+        {
+            Debug.Log($"[CombatDebugListener] CombatStatusApplied side={signal.Side} status={signal.StatusId} stacks={signal.Stacks} remaining={signal.RemainingTurns} permanent={signal.IsPermanent}");
+        }
+
+        private void OnCombatStatusExpired(CombatStatusExpired signal)
+        {
+            Debug.Log($"[CombatDebugListener] CombatStatusExpired side={signal.Side} status={signal.StatusId}");
+        }
+
+        private void OnCombatStatusTickDamage(CombatStatusTickDamage signal)
+        {
+            Debug.Log($"[CombatDebugListener] CombatStatusTickDamage side={signal.Side} status={signal.StatusId} damage={signal.Damage} turn={signal.TurnIndex}");
         }
     }
 }

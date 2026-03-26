@@ -1,15 +1,18 @@
 using FlushAndFury.Domain.Combat;
 using FlushAndFury.Infrastructure.Events;
+using System;
 
 namespace FlushAndFury.Application.Combat
 {
     public sealed class EnemyActionExecutor
     {
         private readonly IEventBus eventBus;
+        private readonly CombatStatusService statusService;
 
-        public EnemyActionExecutor(IEventBus bus)
+        public EnemyActionExecutor(IEventBus bus, CombatStatusService combatStatusService)
         {
             eventBus = bus;
+            statusService = combatStatusService;
         }
 
         public EnemyTurnResult Execute(EnemyIntent intent)
@@ -21,8 +24,13 @@ namespace FlushAndFury.Application.Combat
 
             if (intent.IntentType == EnemyIntentType.Attack)
             {
-                result.DamageToPlayer = intent.Value;
-                eventBus?.Publish(new EnemyAttackResolved(intent.Value));
+                int outgoingFlat = statusService.GetOutgoingFlatBonus(CombatSide.Enemy, DamageType.Physical);
+                float outgoingMult = statusService.GetOutgoingMultiplier(CombatSide.Enemy);
+                float incomingMult = statusService.GetIncomingMultiplier(CombatSide.Player);
+
+                float attackDamage = (intent.Value + outgoingFlat) * outgoingMult * incomingMult;
+                result.DamageToPlayer = Math.Max(0, (int)Math.Floor(attackDamage));
+                eventBus?.Publish(new EnemyAttackResolved(result.DamageToPlayer));
             }
             else if (intent.IntentType == EnemyIntentType.Defend)
             {

@@ -8,15 +8,17 @@ namespace FlushAndFury.Application.Combat
     {
         private readonly ResolveCombatActionUseCase resolveCombatActionUseCase;
         private readonly EnemyTurnService enemyTurnService;
+        private readonly CombatStatusService statusService;
         private readonly IEventBus eventBus;
         private bool hasBattleStarted;
 
         public CombatTurnState State { get; }
 
-        public CombatTurnFlowService(ResolveCombatActionUseCase useCase, EnemyTurnService enemyService, IEventBus bus)
+        public CombatTurnFlowService(ResolveCombatActionUseCase useCase, EnemyTurnService enemyService, CombatStatusService combatStatusService, IEventBus bus)
         {
             resolveCombatActionUseCase = useCase;
             enemyTurnService = enemyService;
+            statusService = combatStatusService;
             eventBus = bus;
             State = new CombatTurnState
             {
@@ -34,6 +36,7 @@ namespace FlushAndFury.Application.Combat
             }
 
             hasBattleStarted = true;
+            statusService.ResetBattle();
             State.TurnIndex = 1;
             State.Owner = TurnOwner.Player;
             State.Phase = CombatTurnPhase.BattleStart;
@@ -53,6 +56,7 @@ namespace FlushAndFury.Application.Combat
             State.Owner = TurnOwner.Player;
             State.Phase = CombatTurnPhase.TurnStart;
             LogState("Player turn start");
+            statusService.ProcessTurnStart(CombatSide.Player, State.TurnIndex);
 
             State.Phase = CombatTurnPhase.Input;
             LogState("Player input phase");
@@ -60,6 +64,12 @@ namespace FlushAndFury.Application.Combat
 
         public DamageContext ResolvePlayerAction(CombatActionCommand command)
         {
+            if (command == null)
+            {
+                Debug.LogWarning("[CombatTurnFlow] ResolvePlayerAction received null command.");
+                return null;
+            }
+
             if (State.Owner != TurnOwner.Player || State.Phase != CombatTurnPhase.Input)
             {
                 Debug.LogWarning($"[CombatTurnFlow] Invalid resolve request in state: {State}");
@@ -68,6 +78,10 @@ namespace FlushAndFury.Application.Combat
 
             State.Phase = CombatTurnPhase.Resolve;
             LogState("Player resolve phase");
+
+            command.CardFlatDamageBonus += statusService.GetOutgoingFlatBonus(CombatSide.Player, command.DamageType);
+            command.BoonDamageMultiplier *= statusService.GetOutgoingMultiplier(CombatSide.Player);
+            command.DefenseMultiplier *= statusService.GetIncomingMultiplier(CombatSide.Enemy);
 
             DamageContext result = resolveCombatActionUseCase.Execute(command);
             return result;
@@ -97,6 +111,7 @@ namespace FlushAndFury.Application.Combat
             State.Owner = TurnOwner.Enemy;
             State.Phase = CombatTurnPhase.TurnStart;
             LogState("Enemy turn start");
+            statusService.ProcessTurnStart(CombatSide.Enemy, State.TurnIndex);
         }
 
         public EnemyTurnResult ResolveEnemyTurn()

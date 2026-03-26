@@ -149,6 +149,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FlushAndFury.Core.DI.ProjectLifetimeScope
   battleLifetimeScopePrefab: {fileID: 5780604459225274730, guid: 784e678f9d728ab4a92a227c0c7ae9de, type: 3}
+  cardRuleDatabase: {fileID: 11400000, guid: 5022c5c726741714ea3958af4298a41f, type: 2}
+  relicRuleDatabase: {fileID: 11400000, guid: 94ddbe7963718f84697836be9ceff291, type: 2}
+  enemyIntentProfile: {fileID: 11400000, guid: 80a1d80c17669ab4fb2952e4e8923075, type: 2}
 --- !u!4 &91643876
 Transform:
   m_ObjectHideFlags: 0

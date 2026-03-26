@@ -156,6 +156,52 @@ namespace FlushAndFury.Infrastructure.Events
         }
     }
 
+    public readonly struct CombatStatusApplied
+    {
+        public readonly string Side;
+        public readonly string StatusId;
+        public readonly int Stacks;
+        public readonly int RemainingTurns;
+        public readonly bool IsPermanent;
+
+        public CombatStatusApplied(string side, string statusId, int stacks, int remainingTurns, bool isPermanent)
+        {
+            Side = side;
+            StatusId = statusId;
+            Stacks = stacks;
+            RemainingTurns = remainingTurns;
+            IsPermanent = isPermanent;
+        }
+    }
+
+    public readonly struct CombatStatusExpired
+    {
+        public readonly string Side;
+        public readonly string StatusId;
+
+        public CombatStatusExpired(string side, string statusId)
+        {
+            Side = side;
+            StatusId = statusId;
+        }
+    }
+
+    public readonly struct CombatStatusTickDamage
+    {
+        public readonly string Side;
+        public readonly string StatusId;
+        public readonly int Damage;
+        public readonly int TurnIndex;
+
+        public CombatStatusTickDamage(string side, string statusId, int damage, int turnIndex)
+        {
+            Side = side;
+            StatusId = statusId;
+            Damage = damage;
+            TurnIndex = turnIndex;
+        }
+    }
+
     public readonly struct EnemyAttackResolved
     {
         public readonly int Damage;

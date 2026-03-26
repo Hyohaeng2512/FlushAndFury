@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca0a6341439bd4d4193bf22277fd40d4, type: 3}
+  m_Name: CardRuleDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::FlushAndFury.Config.Cards.CardRuleDatabase
+  rules:
+  - {fileID: 11400000, guid: 7a94284b580de7d44acb103b00b12bde, type: 2}
+  - {fileID: 11400000, guid: 618ea378f39476646a697d131af42693, type: 2}
+  - {fileID: 11400000, guid: 71baa5216a9c05e4ead4d107271bb6d6, type: 2}
+  - {fileID: 11400000, guid: c541f542f04eac544b9a7e2ab91065c4, type: 2}
+  - {fileID: 11400000, guid: bc8af134793b5fa4c8360053d3177719, type: 2}
+  - {fileID: 11400000, guid: a88a58927e8f6f44eb28965f13c7878d, type: 2}
+  - {fileID: 11400000, guid: 89b54768aaaae2e40a2248b7e549836f, type: 2}
+  - {fileID: 11400000, guid: 5970a17599fe9cd4799f1057fa52b013, type: 2}
+  - {fileID: 11400000, guid: 54c40ca2b5ed40143a89bfa93702715a, type: 2}
+  - {fileID: 11400000, guid: 9d54467750de76a4aa6b71d42ac3ffdd, type: 2}
