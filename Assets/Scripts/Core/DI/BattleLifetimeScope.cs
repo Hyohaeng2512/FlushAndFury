@@ -14,6 +14,7 @@ namespace FlushAndFury.Core.DI
         private IRngService rngService;
 
         public ResolveCombatActionUseCase ResolveCombatActionUseCase { get; private set; }
+        public CombatTurnFlowService CombatTurnFlowService { get; private set; }
 
         public void Initialize(ICombatCalculator calculator, IEventBus bus, IRngService rng)
         {
@@ -22,9 +23,11 @@ namespace FlushAndFury.Core.DI
             rngService = rng;
 
             ResolveCombatActionUseCase = new ResolveCombatActionUseCase(combatCalculator);
+            CombatTurnFlowService = new CombatTurnFlowService(ResolveCombatActionUseCase);
 
             BattlePresenter presenter = FindAnyObjectByType<BattlePresenter>();
             presenter?.SetUseCase(ResolveCombatActionUseCase);
+            presenter?.SetTurnFlowService(CombatTurnFlowService);
 
             CombatDebugListener debugListener = FindAnyObjectByType<CombatDebugListener>();
             debugListener?.Bind(eventBus);
