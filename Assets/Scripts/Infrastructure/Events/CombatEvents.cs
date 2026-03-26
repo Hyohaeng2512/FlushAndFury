@@ -126,6 +126,36 @@ namespace FlushAndFury.Infrastructure.Events
         }
     }
 
+    public readonly struct EnemyIntentConsumed
+    {
+        public readonly string IntentType;
+        public readonly int Value;
+        public readonly int TurnIndex;
+
+        public EnemyIntentConsumed(string intentType, int value, int turnIndex)
+        {
+            IntentType = intentType;
+            Value = value;
+            TurnIndex = turnIndex;
+        }
+    }
+
+    public readonly struct TurnSnapshotRecorded
+    {
+        public readonly string Source;
+        public readonly int TurnIndex;
+        public readonly string Owner;
+        public readonly string Phase;
+
+        public TurnSnapshotRecorded(string source, int turnIndex, string owner, string phase)
+        {
+            Source = source;
+            TurnIndex = turnIndex;
+            Owner = owner;
+            Phase = phase;
+        }
+    }
+
     public readonly struct EnemyAttackResolved
     {
         public readonly int Damage;

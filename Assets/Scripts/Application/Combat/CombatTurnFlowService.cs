@@ -1,4 +1,5 @@
 using FlushAndFury.Domain.Combat;
+using FlushAndFury.Infrastructure.Events;
 using UnityEngine;
 
 namespace FlushAndFury.Application.Combat
@@ -7,13 +8,16 @@ namespace FlushAndFury.Application.Combat
     {
         private readonly ResolveCombatActionUseCase resolveCombatActionUseCase;
         private readonly EnemyTurnService enemyTurnService;
+        private readonly IEventBus eventBus;
+        private bool hasBattleStarted;
 
         public CombatTurnState State { get; }
 
-        public CombatTurnFlowService(ResolveCombatActionUseCase useCase, EnemyTurnService enemyService)
+        public CombatTurnFlowService(ResolveCombatActionUseCase useCase, EnemyTurnService enemyService, IEventBus bus)
         {
             resolveCombatActionUseCase = useCase;
             enemyTurnService = enemyService;
+            eventBus = bus;
             State = new CombatTurnState
             {
                 TurnIndex = 0,
@@ -24,6 +28,12 @@ namespace FlushAndFury.Application.Combat
 
         public void StartBattle()
         {
+            if (hasBattleStarted)
+            {
+                Debug.LogWarning("[CombatTurnFlow] Battle already started. Restarting state.");
+            }
+
+            hasBattleStarted = true;
             State.TurnIndex = 1;
             State.Owner = TurnOwner.Player;
             State.Phase = CombatTurnPhase.BattleStart;
@@ -34,6 +44,12 @@ namespace FlushAndFury.Application.Combat
 
         public void EnterPlayerTurnStart()
         {
+            if (!hasBattleStarted)
+            {
+                Debug.LogWarning("[CombatTurnFlow] EnterPlayerTurnStart called before StartBattle.");
+                return;
+            }
+
             State.Owner = TurnOwner.Player;
             State.Phase = CombatTurnPhase.TurnStart;
             LogState("Player turn start");
@@ -59,6 +75,12 @@ namespace FlushAndFury.Application.Combat
 
         public void EndPlayerTurn()
         {
+            if (State.Owner != TurnOwner.Player || (State.Phase != CombatTurnPhase.Resolve && State.Phase != CombatTurnPhase.Input))
+            {
+                Debug.LogWarning($"[CombatTurnFlow] Invalid EndPlayerTurn state: {State}");
+                return;
+            }
+
             State.Owner = TurnOwner.Player;
             State.Phase = CombatTurnPhase.TurnEnd;
             LogState("Player turn end");
@@ -66,6 +88,12 @@ namespace FlushAndFury.Application.Combat
 
         public void EnterEnemyTurnStart()
         {
+            if (State.Owner != TurnOwner.Player || State.Phase != CombatTurnPhase.TurnEnd)
+            {
+                Debug.LogWarning($"[CombatTurnFlow] Invalid EnterEnemyTurnStart state: {State}");
+                return;
+            }
+
             State.Owner = TurnOwner.Enemy;
             State.Phase = CombatTurnPhase.TurnStart;
             LogState("Enemy turn start");
@@ -88,6 +116,12 @@ namespace FlushAndFury.Application.Combat
 
         public void EndEnemyTurnAndAdvance()
         {
+            if (State.Owner != TurnOwner.Enemy || State.Phase != CombatTurnPhase.Resolve)
+            {
+                Debug.LogWarning($"[CombatTurnFlow] Invalid EndEnemyTurnAndAdvance state: {State}");
+                return;
+            }
+
             State.Owner = TurnOwner.Enemy;
             State.Phase = CombatTurnPhase.TurnEnd;
             LogState("Enemy turn end");
@@ -99,6 +133,7 @@ namespace FlushAndFury.Application.Combat
         private void LogState(string action)
         {
             Debug.Log($"[CombatTurnFlow] {action} | {State}");
+            eventBus?.Publish(new TurnSnapshotRecorded(action, State.TurnIndex, State.Owner.ToString(), State.Phase.ToString()));
         }
     }
 }

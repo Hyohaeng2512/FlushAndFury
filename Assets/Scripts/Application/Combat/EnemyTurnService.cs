@@ -1,6 +1,7 @@
 using FlushAndFury.Domain.Combat;
 using FlushAndFury.Infrastructure.Events;
 using FlushAndFury.Infrastructure.Random;
+using UnityEngine;
 
 namespace FlushAndFury.Application.Combat
 {
@@ -8,52 +9,62 @@ namespace FlushAndFury.Application.Combat
     {
         private readonly IRngService rngService;
         private readonly IEventBus eventBus;
+        private readonly EnemyActionExecutor enemyActionExecutor;
         private EnemyIntent telegraphedIntent;
+        private int telegraphedTurnIndex = -1;
+        private int lastResolvedTurnIndex = -1;
 
-        public EnemyTurnService(IRngService rng, IEventBus bus)
+        public EnemyTurnService(IRngService rng, IEventBus bus, EnemyActionExecutor actionExecutor)
         {
             rngService = rng;
             eventBus = bus;
+            enemyActionExecutor = actionExecutor;
         }
 
         public void InitializeForBattle(int turnIndex)
         {
             telegraphedIntent = SelectIntent(turnIndex);
+            telegraphedTurnIndex = turnIndex;
+            lastResolvedTurnIndex = -1;
             PublishTelegraph(telegraphedIntent);
         }
 
         public EnemyTurnResult ResolveTurn(int turnIndex)
         {
+            if (turnIndex <= 0)
+            {
+                Debug.LogWarning($"[EnemyTurnService] Invalid turn index: {turnIndex}");
+                return null;
+            }
+
+            if (lastResolvedTurnIndex == turnIndex)
+            {
+                Debug.LogWarning($"[EnemyTurnService] Enemy turn already resolved for turn {turnIndex}");
+                return null;
+            }
+
             if (telegraphedIntent == null)
             {
                 InitializeForBattle(turnIndex);
             }
 
+            if (telegraphedTurnIndex != turnIndex)
+            {
+                Debug.LogWarning($"[EnemyTurnService] Telegraph mismatch. expected={telegraphedTurnIndex} incoming={turnIndex}. Regenerating.");
+                telegraphedIntent = SelectIntent(turnIndex);
+                telegraphedTurnIndex = turnIndex;
+                PublishTelegraph(telegraphedIntent);
+            }
+
             EnemyIntent intent = telegraphedIntent;
             eventBus?.Publish(new EnemyIntentSelected(intent.IntentType.ToString(), intent.Value, intent.Description));
+            eventBus?.Publish(new EnemyIntentConsumed(intent.IntentType.ToString(), intent.Value, turnIndex));
 
-            EnemyTurnResult result = new EnemyTurnResult
-            {
-                Intent = intent,
-            };
-
-            if (intent.IntentType == EnemyIntentType.Attack)
-            {
-                result.DamageToPlayer = intent.Value;
-                eventBus?.Publish(new EnemyAttackResolved(intent.Value));
-            }
-            else if (intent.IntentType == EnemyIntentType.Defend)
-            {
-                result.BlockGained = intent.Value;
-                eventBus?.Publish(new EnemyBlockGained(intent.Value));
-            }
-            else if (intent.IntentType == EnemyIntentType.Debuff)
-            {
-                result.DebuffApplied = true;
-                eventBus?.Publish(new EnemyDebuffApplied("Weak", intent.Value));
-            }
+            EnemyTurnResult result = enemyActionExecutor.Execute(intent);
+            lastResolvedTurnIndex = turnIndex;
 
             telegraphedIntent = SelectIntent(turnIndex + 1);
+            telegraphedTurnIndex = turnIndex + 1;
             PublishTelegraph(telegraphedIntent);
 
             return result;

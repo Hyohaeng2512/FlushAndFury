@@ -46,9 +46,11 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Subscribe<EnemyChargeIfPlayerSkippedAttackRequested>(OnEnemyChargeIfPlayerSkippedAttackRequested);
             eventBus.Subscribe<EnemyIntentSelected>(OnEnemyIntentSelected);
             eventBus.Subscribe<EnemyIntentTelegraphed>(OnEnemyIntentTelegraphed);
+            eventBus.Subscribe<EnemyIntentConsumed>(OnEnemyIntentConsumed);
             eventBus.Subscribe<EnemyAttackResolved>(OnEnemyAttackResolved);
             eventBus.Subscribe<EnemyBlockGained>(OnEnemyBlockGained);
             eventBus.Subscribe<EnemyDebuffApplied>(OnEnemyDebuffApplied);
+            eventBus.Subscribe<TurnSnapshotRecorded>(OnTurnSnapshotRecorded);
 
             isSubscribed = true;
         }
@@ -74,9 +76,11 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Unsubscribe<EnemyChargeIfPlayerSkippedAttackRequested>(OnEnemyChargeIfPlayerSkippedAttackRequested);
             eventBus.Unsubscribe<EnemyIntentSelected>(OnEnemyIntentSelected);
             eventBus.Unsubscribe<EnemyIntentTelegraphed>(OnEnemyIntentTelegraphed);
+            eventBus.Unsubscribe<EnemyIntentConsumed>(OnEnemyIntentConsumed);
             eventBus.Unsubscribe<EnemyAttackResolved>(OnEnemyAttackResolved);
             eventBus.Unsubscribe<EnemyBlockGained>(OnEnemyBlockGained);
             eventBus.Unsubscribe<EnemyDebuffApplied>(OnEnemyDebuffApplied);
+            eventBus.Unsubscribe<TurnSnapshotRecorded>(OnTurnSnapshotRecorded);
 
             isSubscribed = false;
         }
@@ -151,6 +155,11 @@ namespace FlushAndFury.Presentation.Battle
             Debug.Log($"[CombatDebugListener] EnemyIntentTelegraphed type={signal.IntentType} value={signal.Value} desc={signal.Description}");
         }
 
+        private void OnEnemyIntentConsumed(EnemyIntentConsumed signal)
+        {
+            Debug.Log($"[CombatDebugListener] EnemyIntentConsumed type={signal.IntentType} value={signal.Value} turn={signal.TurnIndex}");
+        }
+
         private void OnEnemyAttackResolved(EnemyAttackResolved signal)
         {
             Debug.Log($"[CombatDebugListener] EnemyAttackResolved damage={signal.Damage}");
@@ -164,6 +173,11 @@ namespace FlushAndFury.Presentation.Battle
         private void OnEnemyDebuffApplied(EnemyDebuffApplied signal)
         {
             Debug.Log($"[CombatDebugListener] EnemyDebuffApplied debuff={signal.DebuffId} value={signal.Value}");
+        }
+
+        private void OnTurnSnapshotRecorded(TurnSnapshotRecorded signal)
+        {
+            Debug.Log($"[CombatDebugListener] TurnSnapshot source={signal.Source} turn={signal.TurnIndex} owner={signal.Owner} phase={signal.Phase}");
         }
     }
 }

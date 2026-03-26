@@ -23,8 +23,9 @@ namespace FlushAndFury.Core.DI
             rngService = rng;
 
             ResolveCombatActionUseCase = new ResolveCombatActionUseCase(combatCalculator);
-            EnemyTurnService enemyTurnService = new EnemyTurnService(rngService, eventBus);
-            CombatTurnFlowService = new CombatTurnFlowService(ResolveCombatActionUseCase, enemyTurnService);
+            EnemyActionExecutor enemyActionExecutor = new EnemyActionExecutor(eventBus);
+            EnemyTurnService enemyTurnService = new EnemyTurnService(rngService, eventBus, enemyActionExecutor);
+            CombatTurnFlowService = new CombatTurnFlowService(ResolveCombatActionUseCase, enemyTurnService, eventBus);
 
             BattlePresenter presenter = FindAnyObjectByType<BattlePresenter>();
             presenter?.SetUseCase(ResolveCombatActionUseCase);
