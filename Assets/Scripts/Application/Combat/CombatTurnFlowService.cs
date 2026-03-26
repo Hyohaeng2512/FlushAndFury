@@ -6,12 +6,14 @@ namespace FlushAndFury.Application.Combat
     public sealed class CombatTurnFlowService
     {
         private readonly ResolveCombatActionUseCase resolveCombatActionUseCase;
+        private readonly EnemyTurnService enemyTurnService;
 
         public CombatTurnState State { get; }
 
-        public CombatTurnFlowService(ResolveCombatActionUseCase useCase)
+        public CombatTurnFlowService(ResolveCombatActionUseCase useCase, EnemyTurnService enemyService)
         {
             resolveCombatActionUseCase = useCase;
+            enemyTurnService = enemyService;
             State = new CombatTurnState
             {
                 TurnIndex = 0,
@@ -68,16 +70,19 @@ namespace FlushAndFury.Application.Combat
             LogState("Enemy turn start");
         }
 
-        public void ResolveEnemyTurnNoop()
+        public EnemyTurnResult ResolveEnemyTurn()
         {
             if (State.Owner != TurnOwner.Enemy || State.Phase != CombatTurnPhase.TurnStart)
             {
                 Debug.LogWarning($"[CombatTurnFlow] Invalid enemy resolve request in state: {State}");
-                return;
+                return null;
             }
 
             State.Phase = CombatTurnPhase.Resolve;
-            LogState("Enemy resolve phase (noop)");
+            LogState("Enemy resolve phase");
+
+            EnemyTurnResult result = enemyTurnService.ResolveTurn(State.TurnIndex);
+            return result;
         }
 
         public void EndEnemyTurnAndAdvance()

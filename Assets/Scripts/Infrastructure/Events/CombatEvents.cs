@@ -97,4 +97,50 @@ namespace FlushAndFury.Infrastructure.Events
     public readonly struct EnemyChargeIfPlayerSkippedAttackRequested
     {
     }
+
+    public readonly struct EnemyIntentSelected
+    {
+        public readonly string IntentType;
+        public readonly int Value;
+        public readonly string Description;
+
+        public EnemyIntentSelected(string intentType, int value, string description)
+        {
+            IntentType = intentType;
+            Value = value;
+            Description = description;
+        }
+    }
+
+    public readonly struct EnemyAttackResolved
+    {
+        public readonly int Damage;
+
+        public EnemyAttackResolved(int damage)
+        {
+            Damage = damage;
+        }
+    }
+
+    public readonly struct EnemyBlockGained
+    {
+        public readonly int Amount;
+
+        public EnemyBlockGained(int amount)
+        {
+            Amount = amount;
+        }
+    }
+
+    public readonly struct EnemyDebuffApplied
+    {
+        public readonly string DebuffId;
+        public readonly int Value;
+
+        public EnemyDebuffApplied(string debuffId, int value)
+        {
+            DebuffId = debuffId;
+            Value = value;
+        }
+    }
 }

@@ -44,6 +44,10 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Subscribe<ReflectDamageToPlayerRequested>(OnReflectDamageToPlayerRequested);
             eventBus.Subscribe<EnemyGainBuffRequested>(OnEnemyGainBuffRequested);
             eventBus.Subscribe<EnemyChargeIfPlayerSkippedAttackRequested>(OnEnemyChargeIfPlayerSkippedAttackRequested);
+            eventBus.Subscribe<EnemyIntentSelected>(OnEnemyIntentSelected);
+            eventBus.Subscribe<EnemyAttackResolved>(OnEnemyAttackResolved);
+            eventBus.Subscribe<EnemyBlockGained>(OnEnemyBlockGained);
+            eventBus.Subscribe<EnemyDebuffApplied>(OnEnemyDebuffApplied);
 
             isSubscribed = true;
         }
@@ -67,6 +71,10 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Unsubscribe<ReflectDamageToPlayerRequested>(OnReflectDamageToPlayerRequested);
             eventBus.Unsubscribe<EnemyGainBuffRequested>(OnEnemyGainBuffRequested);
             eventBus.Unsubscribe<EnemyChargeIfPlayerSkippedAttackRequested>(OnEnemyChargeIfPlayerSkippedAttackRequested);
+            eventBus.Unsubscribe<EnemyIntentSelected>(OnEnemyIntentSelected);
+            eventBus.Unsubscribe<EnemyAttackResolved>(OnEnemyAttackResolved);
+            eventBus.Unsubscribe<EnemyBlockGained>(OnEnemyBlockGained);
+            eventBus.Unsubscribe<EnemyDebuffApplied>(OnEnemyDebuffApplied);
 
             isSubscribed = false;
         }
@@ -129,6 +137,26 @@ namespace FlushAndFury.Presentation.Battle
         private void OnEnemyChargeIfPlayerSkippedAttackRequested(EnemyChargeIfPlayerSkippedAttackRequested signal)
         {
             Debug.Log("[CombatDebugListener] EnemyChargeIfPlayerSkippedAttackRequested");
+        }
+
+        private void OnEnemyIntentSelected(EnemyIntentSelected signal)
+        {
+            Debug.Log($"[CombatDebugListener] EnemyIntentSelected type={signal.IntentType} value={signal.Value} desc={signal.Description}");
+        }
+
+        private void OnEnemyAttackResolved(EnemyAttackResolved signal)
+        {
+            Debug.Log($"[CombatDebugListener] EnemyAttackResolved damage={signal.Damage}");
+        }
+
+        private void OnEnemyBlockGained(EnemyBlockGained signal)
+        {
+            Debug.Log($"[CombatDebugListener] EnemyBlockGained amount={signal.Amount}");
+        }
+
+        private void OnEnemyDebuffApplied(EnemyDebuffApplied signal)
+        {
+            Debug.Log($"[CombatDebugListener] EnemyDebuffApplied debuff={signal.DebuffId} value={signal.Value}");
         }
     }
 }

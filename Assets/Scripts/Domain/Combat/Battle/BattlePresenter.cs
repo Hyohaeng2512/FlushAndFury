@@ -44,7 +44,11 @@ namespace FlushAndFury.Presentation.Battle
 
             combatTurnFlowService.EndPlayerTurn();
             combatTurnFlowService.EnterEnemyTurnStart();
-            combatTurnFlowService.ResolveEnemyTurnNoop();
+            EnemyTurnResult enemyResult = combatTurnFlowService.ResolveEnemyTurn();
+            if (enemyResult != null)
+            {
+                Debug.Log($"[BattlePresenter] Run Turn Flow Demo | Enemy Intent: {enemyResult.Intent.IntentType} | DamageToPlayer: {enemyResult.DamageToPlayer} | BlockGained: {enemyResult.BlockGained} | DebuffApplied: {enemyResult.DebuffApplied}");
+            }
             combatTurnFlowService.EndEnemyTurnAndAdvance();
         }
 
