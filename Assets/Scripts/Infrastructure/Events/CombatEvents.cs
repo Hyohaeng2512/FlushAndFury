@@ -97,4 +97,140 @@ namespace FlushAndFury.Infrastructure.Events
     public readonly struct EnemyChargeIfPlayerSkippedAttackRequested
     {
     }
+
+    public readonly struct EnemyIntentSelected
+    {
+        public readonly string IntentType;
+        public readonly int Value;
+        public readonly string Description;
+
+        public EnemyIntentSelected(string intentType, int value, string description)
+        {
+            IntentType = intentType;
+            Value = value;
+            Description = description;
+        }
+    }
+
+    public readonly struct EnemyIntentTelegraphed
+    {
+        public readonly string IntentType;
+        public readonly int Value;
+        public readonly string Description;
+
+        public EnemyIntentTelegraphed(string intentType, int value, string description)
+        {
+            IntentType = intentType;
+            Value = value;
+            Description = description;
+        }
+    }
+
+    public readonly struct EnemyIntentConsumed
+    {
+        public readonly string IntentType;
+        public readonly int Value;
+        public readonly int TurnIndex;
+
+        public EnemyIntentConsumed(string intentType, int value, int turnIndex)
+        {
+            IntentType = intentType;
+            Value = value;
+            TurnIndex = turnIndex;
+        }
+    }
+
+    public readonly struct TurnSnapshotRecorded
+    {
+        public readonly string Source;
+        public readonly int TurnIndex;
+        public readonly string Owner;
+        public readonly string Phase;
+
+        public TurnSnapshotRecorded(string source, int turnIndex, string owner, string phase)
+        {
+            Source = source;
+            TurnIndex = turnIndex;
+            Owner = owner;
+            Phase = phase;
+        }
+    }
+
+    public readonly struct CombatStatusApplied
+    {
+        public readonly string Side;
+        public readonly string StatusId;
+        public readonly int Stacks;
+        public readonly int RemainingTurns;
+        public readonly bool IsPermanent;
+
+        public CombatStatusApplied(string side, string statusId, int stacks, int remainingTurns, bool isPermanent)
+        {
+            Side = side;
+            StatusId = statusId;
+            Stacks = stacks;
+            RemainingTurns = remainingTurns;
+            IsPermanent = isPermanent;
+        }
+    }
+
+    public readonly struct CombatStatusExpired
+    {
+        public readonly string Side;
+        public readonly string StatusId;
+
+        public CombatStatusExpired(string side, string statusId)
+        {
+            Side = side;
+            StatusId = statusId;
+        }
+    }
+
+    public readonly struct CombatStatusTickDamage
+    {
+        public readonly string Side;
+        public readonly string StatusId;
+        public readonly int Damage;
+        public readonly int TurnIndex;
+
+        public CombatStatusTickDamage(string side, string statusId, int damage, int turnIndex)
+        {
+            Side = side;
+            StatusId = statusId;
+            Damage = damage;
+            TurnIndex = turnIndex;
+        }
+    }
+
+    public readonly struct EnemyAttackResolved
+    {
+        public readonly int Damage;
+
+        public EnemyAttackResolved(int damage)
+        {
+            Damage = damage;
+        }
+    }
+
+    public readonly struct EnemyBlockGained
+    {
+        public readonly int Amount;
+
+        public EnemyBlockGained(int amount)
+        {
+            Amount = amount;
+        }
+    }
+
+    public readonly struct EnemyDebuffApplied
+    {
+        public readonly string DebuffId;
+        public readonly int Value;
+
+        public EnemyDebuffApplied(string debuffId, int value)
+        {
+            DebuffId = debuffId;
+            Value = value;
+        }
+    }
 }

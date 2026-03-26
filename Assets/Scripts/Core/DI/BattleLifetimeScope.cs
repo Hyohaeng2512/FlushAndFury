@@ -1,4 +1,5 @@
 using FlushAndFury.Application.Combat;
+using FlushAndFury.Config.Enemies;
 using FlushAndFury.Domain.Combat;
 using FlushAndFury.Infrastructure.Events;
 using FlushAndFury.Infrastructure.Random;
@@ -14,17 +15,23 @@ namespace FlushAndFury.Core.DI
         private IRngService rngService;
 
         public ResolveCombatActionUseCase ResolveCombatActionUseCase { get; private set; }
+        public CombatTurnFlowService CombatTurnFlowService { get; private set; }
 
-        public void Initialize(ICombatCalculator calculator, IEventBus bus, IRngService rng)
+        public void Initialize(ICombatCalculator calculator, IEventBus bus, IRngService rng, EnemyIntentProfile enemyIntentProfile)
         {
             combatCalculator = calculator;
             eventBus = bus;
             rngService = rng;
 
             ResolveCombatActionUseCase = new ResolveCombatActionUseCase(combatCalculator);
+            CombatStatusService combatStatusService = new CombatStatusService(eventBus);
+            EnemyActionExecutor enemyActionExecutor = new EnemyActionExecutor(eventBus, combatStatusService);
+            EnemyTurnService enemyTurnService = new EnemyTurnService(rngService, eventBus, enemyActionExecutor, enemyIntentProfile);
+            CombatTurnFlowService = new CombatTurnFlowService(ResolveCombatActionUseCase, enemyTurnService, combatStatusService, eventBus);
 
             BattlePresenter presenter = FindAnyObjectByType<BattlePresenter>();
             presenter?.SetUseCase(ResolveCombatActionUseCase);
+            presenter?.SetTurnFlowService(CombatTurnFlowService);
 
             CombatDebugListener debugListener = FindAnyObjectByType<CombatDebugListener>();
             debugListener?.Bind(eventBus);

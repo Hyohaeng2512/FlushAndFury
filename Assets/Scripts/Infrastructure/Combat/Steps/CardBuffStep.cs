@@ -1,20 +1,22 @@
+using FlushAndFury.Config.Cards;
 using FlushAndFury.Domain.Combat;
 using FlushAndFury.Infrastructure.Events;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace FlushAndFury.Infrastructure.Combat.Steps
 {
     public sealed class CardBuffStep : IDamageStep
     {
         private readonly IEventBus eventBus;
+        private readonly CardRuleDatabase cardRuleDatabase;
 
         public int Order => 10;
 
-        public CardBuffStep(IEventBus bus)
+        public CardBuffStep(IEventBus bus, CardRuleDatabase database)
         {
             eventBus = bus;
+            cardRuleDatabase = database;
         }
 
         public void Execute(DamageContext context)
@@ -29,37 +31,131 @@ namespace FlushAndFury.Infrastructure.Combat.Steps
 
         private void ApplyEnchants(DamageContext context)
         {
-            List<string> enchants = context.PlayedCardEnchants
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .OrderBy(GetEnchantPriority)
-                .ToList();
+            if (cardRuleDatabase == null)
+            {
+                ApplyEnchantsFallback(context);
+                return;
+            }
+
+            List<CardRuleDefinition> enchants = cardRuleDatabase != null
+                ? cardRuleDatabase.GetRules(context.PlayedCardEnchants, CardRuleCategory.Enchant)
+                : new List<CardRuleDefinition>();
 
             for (int i = 0; i < enchants.Count; i++)
             {
-                string enchantId = enchants[i];
-                if (enchantId == CombatModifierIds.EnchantFlat3)
+                CardRuleDefinition rule = enchants[i];
+                if (rule.EffectType == CardRuleEffectType.FlatDamageBonus)
                 {
-                    context.CardBuff.FlatDamageBonus += 3;
+                    context.CardBuff.FlatDamageBonus += rule.IntValue;
                 }
-                else if (enchantId == CombatModifierIds.EnchantEnergy1)
+                else if (rule.EffectType == CardRuleEffectType.PublishEnergyGain)
                 {
-                    eventBus?.Publish(new EnergyGainRequested(1));
+                    eventBus?.Publish(new EnergyGainRequested(rule.IntValue));
                 }
-                else if (enchantId == CombatModifierIds.EnchantBurn2)
+                else if (rule.EffectType == CardRuleEffectType.PublishApplyStatusToTarget)
                 {
-                    eventBus?.Publish(new ApplyStatusToTargetRequested("Burn", 2));
+                    string statusId = string.IsNullOrWhiteSpace(rule.StringValue) ? "Burn" : rule.StringValue;
+                    eventBus?.Publish(new ApplyStatusToTargetRequested(statusId, rule.IntValue));
                 }
-                else if (enchantId == CombatModifierIds.EnchantConvertToMagic)
+                else if (rule.EffectType == CardRuleEffectType.ConvertToMagic)
                 {
                     context.DamageType = DamageType.Magic;
+                }
+                else if (rule.EffectType == CardRuleEffectType.DamageMultiplier)
+                {
+                    context.CardBuff.DamageMultiplier *= Math.Max(0f, rule.FloatValue);
                 }
             }
         }
 
         private void ApplyTags(DamageContext context)
         {
-            HashSet<string> tags = new HashSet<string>(context.PlayedCardTags, StringComparer.OrdinalIgnoreCase);
+            if (cardRuleDatabase == null)
+            {
+                ApplyTagsFallback(context);
+                return;
+            }
 
+            List<CardRuleDefinition> tags = cardRuleDatabase != null
+                ? cardRuleDatabase.GetRules(context.PlayedCardTags, CardRuleCategory.Tag)
+                : new List<CardRuleDefinition>();
+
+            for (int i = 0; i < tags.Count; i++)
+            {
+                CardRuleDefinition rule = tags[i];
+                if (rule.EffectType == CardRuleEffectType.FlatDamageBonus)
+                {
+                    context.CardBuff.FlatDamageBonus += rule.IntValue;
+                }
+                else if (rule.EffectType == CardRuleEffectType.DamageMultiplier)
+                {
+                    context.CardBuff.DamageMultiplier *= Math.Max(0f, rule.FloatValue);
+                }
+                else if (rule.EffectType == CardRuleEffectType.PublishLuckyProc)
+                {
+                    eventBus?.Publish(new LuckyProcCheckRequested());
+                }
+
+            }
+        }
+
+        private void ApplySeals(DamageContext context)
+        {
+            if (cardRuleDatabase == null)
+            {
+                ApplySealsFallback(context);
+                return;
+            }
+
+            List<CardRuleDefinition> seals = cardRuleDatabase != null
+                ? cardRuleDatabase.GetRules(context.PlayedCardSeals, CardRuleCategory.Seal)
+                : new List<CardRuleDefinition>();
+
+            for (int i = 0; i < seals.Count; i++)
+            {
+                CardRuleDefinition rule = seals[i];
+                if (rule.EffectType == CardRuleEffectType.PublishCardReturnToDeck)
+                {
+                    eventBus?.Publish(new CardReturnToDeckRequested());
+                }
+                else if (rule.EffectType == CardRuleEffectType.PublishGoldOnKillFlag)
+                {
+                    eventBus?.Publish(new GoldOnKillFlagRequested());
+                }
+                else if (rule.EffectType == CardRuleEffectType.PublishCardPlaceTopDeck)
+                {
+                    eventBus?.Publish(new CardPlaceTopDeckRequested());
+                }
+            }
+        }
+
+        private void ApplyEnchantsFallback(DamageContext context)
+        {
+            for (int i = 0; i < context.PlayedCardEnchants.Count; i++)
+            {
+                string enchantId = context.PlayedCardEnchants[i];
+                if (string.Equals(enchantId, CombatModifierIds.EnchantFlat3, StringComparison.OrdinalIgnoreCase))
+                {
+                    context.CardBuff.FlatDamageBonus += 3;
+                }
+                else if (string.Equals(enchantId, CombatModifierIds.EnchantEnergy1, StringComparison.OrdinalIgnoreCase))
+                {
+                    eventBus?.Publish(new EnergyGainRequested(1));
+                }
+                else if (string.Equals(enchantId, CombatModifierIds.EnchantBurn2, StringComparison.OrdinalIgnoreCase))
+                {
+                    eventBus?.Publish(new ApplyStatusToTargetRequested("Burn", 2));
+                }
+                else if (string.Equals(enchantId, CombatModifierIds.EnchantConvertToMagic, StringComparison.OrdinalIgnoreCase))
+                {
+                    context.DamageType = DamageType.Magic;
+                }
+            }
+        }
+
+        private void ApplyTagsFallback(DamageContext context)
+        {
+            HashSet<string> tags = new HashSet<string>(context.PlayedCardTags, StringComparer.OrdinalIgnoreCase);
             if (tags.Contains(CombatModifierIds.TagWarrior))
             {
                 context.CardBuff.FlatDamageBonus += 1;
@@ -76,48 +172,23 @@ namespace FlushAndFury.Infrastructure.Combat.Steps
             }
         }
 
-        private void ApplySeals(DamageContext context)
+        private void ApplySealsFallback(DamageContext context)
         {
-            List<string> seals = context.PlayedCardSeals
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .OrderBy(GetSealPriority)
-                .ToList();
-
-            for (int i = 0; i < seals.Count; i++)
+            HashSet<string> seals = new HashSet<string>(context.PlayedCardSeals, StringComparer.OrdinalIgnoreCase);
+            if (seals.Contains(CombatModifierIds.SealReturn))
             {
-                string sealId = seals[i];
-                if (sealId == CombatModifierIds.SealReturn)
-                {
-                    eventBus?.Publish(new CardReturnToDeckRequested());
-                }
-                else if (sealId == CombatModifierIds.SealGoldOnKill)
-                {
-                    eventBus?.Publish(new GoldOnKillFlagRequested());
-                }
-                else if (sealId == CombatModifierIds.SealTopDeck)
-                {
-                    eventBus?.Publish(new CardPlaceTopDeckRequested());
-                }
+                eventBus?.Publish(new CardReturnToDeckRequested());
             }
-        }
 
-        private int GetEnchantPriority(string enchantId)
-        {
-            if (enchantId == CombatModifierIds.EnchantFlat3) return 100;
-            if (enchantId == CombatModifierIds.EnchantEnergy1) return 110;
-            if (enchantId == CombatModifierIds.EnchantBurn2) return 120;
-            if (enchantId == CombatModifierIds.EnchantConvertToMagic) return 130;
+            if (seals.Contains(CombatModifierIds.SealGoldOnKill))
+            {
+                eventBus?.Publish(new GoldOnKillFlagRequested());
+            }
 
-            return 999;
-        }
-
-        private int GetSealPriority(string sealId)
-        {
-            if (sealId == CombatModifierIds.SealReturn) return 300;
-            if (sealId == CombatModifierIds.SealGoldOnKill) return 310;
-            if (sealId == CombatModifierIds.SealTopDeck) return 320;
-
-            return 999;
+            if (seals.Contains(CombatModifierIds.SealTopDeck))
+            {
+                eventBus?.Publish(new CardPlaceTopDeckRequested());
+            }
         }
     }
 }

@@ -8,57 +8,48 @@ namespace FlushAndFury.Presentation.Battle
     public class BattlePresenter : MonoBehaviour
     {
         private ResolveCombatActionUseCase resolveCombatActionUseCase;
+        private CombatTurnFlowService combatTurnFlowService;
 
         public void SetUseCase(ResolveCombatActionUseCase useCase)
         {
             resolveCombatActionUseCase = useCase;
         }
 
+        public void SetTurnFlowService(CombatTurnFlowService turnFlowService)
+        {
+            combatTurnFlowService = turnFlowService;
+        }
+
         [ContextMenu("Run Combat Demo")]
         public void RunCombatDemo()
         {
-            CombatActionCommand command = new CombatActionCommand
-            {
-                BaseDamage = 14,
-                CardFlatDamageBonus = 0,
-                RelicFlatDamageBonus = 0,
-                RelicDamageMultiplier = 1f,
-                TargetBlock = 6,
-                DamageType = DamageType.Physical,
-                HandPattern = HandPattern.Pair,
-                DiscardCountThisTurn = 1,
-                HpLostThisTurn = 1,
-                EnemyDefenseRule = EnemyDefenseRule.MirrorBeast,
-                ReflectThreshold = 10,
-                PlayedCardEnchants = new List<string>
-                {
-                    CombatModifierIds.EnchantFlat3,
-                    CombatModifierIds.EnchantEnergy1,
-                    CombatModifierIds.EnchantBurn2,
-                    CombatModifierIds.EnchantConvertToMagic,
-                },
-                PlayedCardTags = new List<string>
-                {
-                    CombatModifierIds.TagWarrior,
-                    CombatModifierIds.TagArcane,
-                    CombatModifierIds.TagLucky,
-                },
-                PlayedCardSeals = new List<string>
-                {
-                    CombatModifierIds.SealReturn,
-                    CombatModifierIds.SealGoldOnKill,
-                    CombatModifierIds.SealTopDeck,
-                },
-                ActiveRelicIds = new List<string>
-                {
-                    CombatModifierIds.RelicWarriorEmblem,
-                    CombatModifierIds.RelicArcaneCore,
-                    CombatModifierIds.RelicBloodPact,
-                    CombatModifierIds.RelicGamblersCoin,
-                },
-            };
+            ExecuteAndLog("Run Combat Demo", CreateFullDemoCommand());
+        }
 
-            ExecuteAndLog("Run Combat Demo", command);
+        [ContextMenu("Run Turn Flow Demo")]
+        public void RunTurnFlowDemo()
+        {
+            if (combatTurnFlowService == null)
+            {
+                Debug.LogWarning("[BattlePresenter] CombatTurnFlowService is not bound yet.");
+                return;
+            }
+
+            combatTurnFlowService.StartBattle();
+            DamageContext playerResult = combatTurnFlowService.ResolvePlayerAction(CreateFullDemoCommand());
+            if (playerResult != null)
+            {
+                Debug.Log($"[BattlePresenter] Run Turn Flow Demo | Player Final Damage: {playerResult.FinalDamage} | DamageType: {playerResult.DamageType}");
+            }
+
+            combatTurnFlowService.EndPlayerTurn();
+            combatTurnFlowService.EnterEnemyTurnStart();
+            EnemyTurnResult enemyResult = combatTurnFlowService.ResolveEnemyTurn();
+            if (enemyResult != null)
+            {
+                Debug.Log($"[BattlePresenter] Run Turn Flow Demo | Enemy Intent: {enemyResult.Intent.IntentType} | DamageToPlayer: {enemyResult.DamageToPlayer} | BlockGained: {enemyResult.BlockGained} | DebuffApplied: {enemyResult.DebuffApplied}");
+            }
+            combatTurnFlowService.EndEnemyTurnAndAdvance();
         }
 
         [ContextMenu("Run Test: PhaseShifter")]
@@ -119,6 +110,50 @@ namespace FlushAndFury.Presentation.Battle
 
             DamageContext result = resolveCombatActionUseCase.Execute(command);
             Debug.Log($"[BattlePresenter] {label} | Final Damage: {result.FinalDamage} | DamageType: {result.DamageType}");
+        }
+
+        private CombatActionCommand CreateFullDemoCommand()
+        {
+            return new CombatActionCommand
+            {
+                BaseDamage = 14,
+                CardFlatDamageBonus = 0,
+                RelicFlatDamageBonus = 0,
+                RelicDamageMultiplier = 1f,
+                TargetBlock = 6,
+                DamageType = DamageType.Physical,
+                HandPattern = HandPattern.Pair,
+                DiscardCountThisTurn = 1,
+                HpLostThisTurn = 1,
+                EnemyDefenseRule = EnemyDefenseRule.MirrorBeast,
+                ReflectThreshold = 10,
+                PlayedCardEnchants = new List<string>
+                {
+                    CombatModifierIds.EnchantFlat3,
+                    CombatModifierIds.EnchantEnergy1,
+                    CombatModifierIds.EnchantBurn2,
+                    CombatModifierIds.EnchantConvertToMagic,
+                },
+                PlayedCardTags = new List<string>
+                {
+                    CombatModifierIds.TagWarrior,
+                    CombatModifierIds.TagArcane,
+                    CombatModifierIds.TagLucky,
+                },
+                PlayedCardSeals = new List<string>
+                {
+                    CombatModifierIds.SealReturn,
+                    CombatModifierIds.SealGoldOnKill,
+                    CombatModifierIds.SealTopDeck,
+                },
+                ActiveRelicIds = new List<string>
+                {
+                    CombatModifierIds.RelicWarriorEmblem,
+                    CombatModifierIds.RelicArcaneCore,
+                    CombatModifierIds.RelicBloodPact,
+                    CombatModifierIds.RelicGamblersCoin,
+                },
+            };
         }
     }
 }
