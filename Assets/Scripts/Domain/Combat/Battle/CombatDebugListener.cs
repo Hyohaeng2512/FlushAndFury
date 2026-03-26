@@ -45,6 +45,7 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Subscribe<EnemyGainBuffRequested>(OnEnemyGainBuffRequested);
             eventBus.Subscribe<EnemyChargeIfPlayerSkippedAttackRequested>(OnEnemyChargeIfPlayerSkippedAttackRequested);
             eventBus.Subscribe<EnemyIntentSelected>(OnEnemyIntentSelected);
+            eventBus.Subscribe<EnemyIntentTelegraphed>(OnEnemyIntentTelegraphed);
             eventBus.Subscribe<EnemyAttackResolved>(OnEnemyAttackResolved);
             eventBus.Subscribe<EnemyBlockGained>(OnEnemyBlockGained);
             eventBus.Subscribe<EnemyDebuffApplied>(OnEnemyDebuffApplied);
@@ -72,6 +73,7 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Unsubscribe<EnemyGainBuffRequested>(OnEnemyGainBuffRequested);
             eventBus.Unsubscribe<EnemyChargeIfPlayerSkippedAttackRequested>(OnEnemyChargeIfPlayerSkippedAttackRequested);
             eventBus.Unsubscribe<EnemyIntentSelected>(OnEnemyIntentSelected);
+            eventBus.Unsubscribe<EnemyIntentTelegraphed>(OnEnemyIntentTelegraphed);
             eventBus.Unsubscribe<EnemyAttackResolved>(OnEnemyAttackResolved);
             eventBus.Unsubscribe<EnemyBlockGained>(OnEnemyBlockGained);
             eventBus.Unsubscribe<EnemyDebuffApplied>(OnEnemyDebuffApplied);
@@ -142,6 +144,11 @@ namespace FlushAndFury.Presentation.Battle
         private void OnEnemyIntentSelected(EnemyIntentSelected signal)
         {
             Debug.Log($"[CombatDebugListener] EnemyIntentSelected type={signal.IntentType} value={signal.Value} desc={signal.Description}");
+        }
+
+        private void OnEnemyIntentTelegraphed(EnemyIntentTelegraphed signal)
+        {
+            Debug.Log($"[CombatDebugListener] EnemyIntentTelegraphed type={signal.IntentType} value={signal.Value} desc={signal.Description}");
         }
 
         private void OnEnemyAttackResolved(EnemyAttackResolved signal)

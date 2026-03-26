@@ -8,6 +8,7 @@ namespace FlushAndFury.Application.Combat
     {
         private readonly IRngService rngService;
         private readonly IEventBus eventBus;
+        private EnemyIntent telegraphedIntent;
 
         public EnemyTurnService(IRngService rng, IEventBus bus)
         {
@@ -15,9 +16,20 @@ namespace FlushAndFury.Application.Combat
             eventBus = bus;
         }
 
+        public void InitializeForBattle(int turnIndex)
+        {
+            telegraphedIntent = SelectIntent(turnIndex);
+            PublishTelegraph(telegraphedIntent);
+        }
+
         public EnemyTurnResult ResolveTurn(int turnIndex)
         {
-            EnemyIntent intent = SelectIntent(turnIndex);
+            if (telegraphedIntent == null)
+            {
+                InitializeForBattle(turnIndex);
+            }
+
+            EnemyIntent intent = telegraphedIntent;
             eventBus?.Publish(new EnemyIntentSelected(intent.IntentType.ToString(), intent.Value, intent.Description));
 
             EnemyTurnResult result = new EnemyTurnResult
@@ -41,7 +53,15 @@ namespace FlushAndFury.Application.Combat
                 eventBus?.Publish(new EnemyDebuffApplied("Weak", intent.Value));
             }
 
+            telegraphedIntent = SelectIntent(turnIndex + 1);
+            PublishTelegraph(telegraphedIntent);
+
             return result;
+        }
+
+        private void PublishTelegraph(EnemyIntent intent)
+        {
+            eventBus?.Publish(new EnemyIntentTelegraphed(intent.IntentType.ToString(), intent.Value, intent.Description));
         }
 
         private EnemyIntent SelectIntent(int turnIndex)

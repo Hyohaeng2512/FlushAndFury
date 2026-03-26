@@ -112,6 +112,20 @@ namespace FlushAndFury.Infrastructure.Events
         }
     }
 
+    public readonly struct EnemyIntentTelegraphed
+    {
+        public readonly string IntentType;
+        public readonly int Value;
+        public readonly string Description;
+
+        public EnemyIntentTelegraphed(string intentType, int value, string description)
+        {
+            IntentType = intentType;
+            Value = value;
+            Description = description;
+        }
+    }
+
     public readonly struct EnemyAttackResolved
     {
         public readonly int Damage;

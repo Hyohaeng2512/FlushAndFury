@@ -28,6 +28,7 @@ namespace FlushAndFury.Application.Combat
             State.Owner = TurnOwner.Player;
             State.Phase = CombatTurnPhase.BattleStart;
             LogState("Battle started");
+            enemyTurnService.InitializeForBattle(State.TurnIndex);
             EnterPlayerTurnStart();
         }
 
