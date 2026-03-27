@@ -6,7 +6,7 @@ namespace FlushAndFury.Application.Combat
     public sealed class CombatActionCommand
     {
         public int BaseDamage { get; set; }
-        public int TargetBlock { get; set; }
+        public int PipelineBlock { get; set; }
         public DamageType DamageType { get; set; } = DamageType.Physical;
 
         public int CardFlatDamageBonus { get; set; }

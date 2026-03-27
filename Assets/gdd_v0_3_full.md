@@ -395,7 +395,7 @@ Card → Empower Player → Attack
 
 ## Pending Next Steps
 
-- [ ] CombatHealthService: HP/Block apply thật cho player/enemy
+- [x] CombatHealthService: HP/Block apply thật cho player/enemy
 - [ ] Run-level persistent state service: PlayerHP + Gold xuyên map
 - [ ] BattleEnd/Reward flow cập nhật vào run state
 - [ ] HUD binding cho intent/status/hp (khi bắt đầu làm UI)

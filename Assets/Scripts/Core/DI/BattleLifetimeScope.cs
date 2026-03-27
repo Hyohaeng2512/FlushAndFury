@@ -31,7 +31,7 @@ namespace FlushAndFury.Core.DI
             CombatHealthService combatHealthService = new CombatHealthService(eventBus, runProgressService);
             EnemyActionExecutor enemyActionExecutor = new EnemyActionExecutor(eventBus, combatStatusService);
             EnemyTurnService enemyTurnService = new EnemyTurnService(rngService, eventBus, enemyActionExecutor, enemyIntentProfile);
-            CombatTurnFlowService = new CombatTurnFlowService(ResolveCombatActionUseCase, enemyTurnService, combatStatusService, combatHealthService, eventBus, enemyMaxHp);
+            CombatTurnFlowService = new CombatTurnFlowService(ResolveCombatActionUseCase, enemyTurnService, combatStatusService, combatHealthService, runProgressService, eventBus, enemyMaxHp);
 
             BattlePresenter presenter = FindAnyObjectByType<BattlePresenter>();
             presenter?.SetUseCase(ResolveCombatActionUseCase);

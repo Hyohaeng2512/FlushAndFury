@@ -293,4 +293,32 @@ namespace FlushAndFury.Infrastructure.Events
             Reason = reason;
         }
     }
+
+    public readonly struct BattleEnded
+    {
+        public readonly string Winner;
+        public readonly int TurnIndex;
+        public readonly string Reason;
+
+        public BattleEnded(string winner, int turnIndex, string reason)
+        {
+            Winner = winner;
+            TurnIndex = turnIndex;
+            Reason = reason;
+        }
+    }
+
+    public readonly struct StageCleared
+    {
+        public readonly int StageIndex;
+        public readonly int RewardGold;
+        public readonly int TotalGold;
+
+        public StageCleared(int stageIndex, int rewardGold, int totalGold)
+        {
+            StageIndex = stageIndex;
+            RewardGold = rewardGold;
+            TotalGold = totalGold;
+        }
+    }
 }

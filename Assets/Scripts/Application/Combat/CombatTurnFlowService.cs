@@ -1,4 +1,5 @@
 using FlushAndFury.Domain.Combat;
+using FlushAndFury.Application.Run;
 using FlushAndFury.Infrastructure.Events;
 using UnityEngine;
 
@@ -10,20 +11,26 @@ namespace FlushAndFury.Application.Combat
         private readonly EnemyTurnService enemyTurnService;
         private readonly CombatStatusService statusService;
         private readonly CombatHealthService healthService;
+        private readonly RunProgressService runProgressService;
         private readonly IEventBus eventBus;
         private readonly int enemyMaxHp;
+        private readonly int stageClearRewardGold;
         private bool hasBattleStarted;
+        private int clearedStageCount;
 
         public CombatTurnState State { get; }
+        public bool IsBattleEnded => State.Phase == CombatTurnPhase.BattleEnd;
 
-        public CombatTurnFlowService(ResolveCombatActionUseCase useCase, EnemyTurnService enemyService, CombatStatusService combatStatusService, CombatHealthService combatHealthService, IEventBus bus, int enemyHp)
+        public CombatTurnFlowService(ResolveCombatActionUseCase useCase, EnemyTurnService enemyService, CombatStatusService combatStatusService, CombatHealthService combatHealthService, RunProgressService runState, IEventBus bus, int enemyHp, int rewardGold = 15)
         {
             resolveCombatActionUseCase = useCase;
             enemyTurnService = enemyService;
             statusService = combatStatusService;
             healthService = combatHealthService;
+            runProgressService = runState;
             eventBus = bus;
             enemyMaxHp = Mathf.Max(1, enemyHp);
+            stageClearRewardGold = Mathf.Max(0, rewardGold);
             State = new CombatTurnState
             {
                 TurnIndex = 0,
@@ -64,6 +71,11 @@ namespace FlushAndFury.Application.Combat
             healthService.ResetPlayerBlockForTurn();
             statusService.ProcessTurnStart(CombatSide.Player, State.TurnIndex);
 
+            if (TryEndBattleIfNeeded("PlayerTurnStart"))
+            {
+                return;
+            }
+
             State.Phase = CombatTurnPhase.Input;
             LogState("Player input phase");
         }
@@ -88,12 +100,12 @@ namespace FlushAndFury.Application.Combat
             command.CardFlatDamageBonus += statusService.GetOutgoingFlatBonus(CombatSide.Player, command.DamageType);
             command.BoonDamageMultiplier *= statusService.GetOutgoingMultiplier(CombatSide.Player);
             command.DefenseMultiplier *= statusService.GetIncomingMultiplier(CombatSide.Enemy);
-            command.TargetBlock = healthService.GetEnemyBlock();
 
             DamageContext result = resolveCombatActionUseCase.Execute(command);
             if (result != null)
             {
                 healthService.ApplyPlayerCombatDamageToEnemy(result.FinalDamage, "PlayerResolve");
+                TryEndBattleIfNeeded("PlayerResolve");
             }
 
             return result;
@@ -104,6 +116,11 @@ namespace FlushAndFury.Application.Combat
             if (State.Owner != TurnOwner.Player || (State.Phase != CombatTurnPhase.Resolve && State.Phase != CombatTurnPhase.Input))
             {
                 Debug.LogWarning($"[CombatTurnFlow] Invalid EndPlayerTurn state: {State}");
+                return;
+            }
+
+            if (TryEndBattleIfNeeded("PlayerTurnEnd"))
+            {
                 return;
             }
 
@@ -131,6 +148,8 @@ namespace FlushAndFury.Application.Combat
             LogState("Enemy turn start");
             healthService.ResetEnemyBlockForTurn();
             statusService.ProcessTurnStart(CombatSide.Enemy, State.TurnIndex);
+
+            TryEndBattleIfNeeded("EnemyTurnStart");
         }
 
         public EnemyTurnResult ResolveEnemyTurn()
@@ -151,6 +170,7 @@ namespace FlushAndFury.Application.Combat
             }
 
             EnemyTurnResult result = enemyTurnService.ResolveTurn(State.TurnIndex);
+            TryEndBattleIfNeeded("EnemyResolve");
             return result;
         }
 
@@ -159,6 +179,11 @@ namespace FlushAndFury.Application.Combat
             if (State.Owner != TurnOwner.Enemy || State.Phase != CombatTurnPhase.Resolve)
             {
                 Debug.LogWarning($"[CombatTurnFlow] Invalid EndEnemyTurnAndAdvance state: {State}");
+                return;
+            }
+
+            if (TryEndBattleIfNeeded("EnemyTurnEnd"))
+            {
                 return;
             }
 
@@ -174,6 +199,50 @@ namespace FlushAndFury.Application.Combat
         {
             Debug.Log($"[CombatTurnFlow] {action} | {State}");
             eventBus?.Publish(new TurnSnapshotRecorded(action, State.TurnIndex, State.Owner.ToString(), State.Phase.ToString()));
+        }
+
+        private bool TryEndBattleIfNeeded(string source)
+        {
+            if (!hasBattleStarted || IsBattleEnded)
+            {
+                return IsBattleEnded;
+            }
+
+            bool playerAlive = healthService.IsPlayerAlive;
+            bool enemyAlive = healthService.IsEnemyAlive;
+
+            if (playerAlive && enemyAlive)
+            {
+                return false;
+            }
+
+            TurnOwner winner = TurnOwner.None;
+            if (playerAlive && !enemyAlive)
+            {
+                winner = TurnOwner.Player;
+            }
+            else if (!playerAlive && enemyAlive)
+            {
+                winner = TurnOwner.Enemy;
+            }
+
+            EndBattle(winner, source);
+            return true;
+        }
+
+        private void EndBattle(TurnOwner winner, string reason)
+        {
+            State.Owner = winner;
+            State.Phase = CombatTurnPhase.BattleEnd;
+            LogState($"Battle ended ({winner})");
+            eventBus?.Publish(new BattleEnded(winner.ToString(), State.TurnIndex, reason));
+
+            if (winner == TurnOwner.Player && stageClearRewardGold > 0)
+            {
+                clearedStageCount += 1;
+                runProgressService.AddGold(stageClearRewardGold, $"StageClear_{clearedStageCount}");
+                eventBus?.Publish(new StageCleared(clearedStageCount, stageClearRewardGold, runProgressService.Gold));
+            }
         }
     }
 }

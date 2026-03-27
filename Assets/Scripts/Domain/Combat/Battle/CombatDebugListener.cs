@@ -58,6 +58,8 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Subscribe<CombatHealthChanged>(OnCombatHealthChanged);
             eventBus.Subscribe<CombatBlockChanged>(OnCombatBlockChanged);
             eventBus.Subscribe<CombatEntityDefeated>(OnCombatEntityDefeated);
+            eventBus.Subscribe<BattleEnded>(OnBattleEnded);
+            eventBus.Subscribe<StageCleared>(OnStageCleared);
 
             isSubscribed = true;
         }
@@ -95,6 +97,8 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Unsubscribe<CombatHealthChanged>(OnCombatHealthChanged);
             eventBus.Unsubscribe<CombatBlockChanged>(OnCombatBlockChanged);
             eventBus.Unsubscribe<CombatEntityDefeated>(OnCombatEntityDefeated);
+            eventBus.Unsubscribe<BattleEnded>(OnBattleEnded);
+            eventBus.Unsubscribe<StageCleared>(OnStageCleared);
 
             isSubscribed = false;
         }
@@ -227,6 +231,16 @@ namespace FlushAndFury.Presentation.Battle
         private void OnCombatEntityDefeated(CombatEntityDefeated signal)
         {
             Debug.Log($"[CombatDebugListener] CombatEntityDefeated side={signal.Side} reason={signal.Reason}");
+        }
+
+        private void OnBattleEnded(BattleEnded signal)
+        {
+            Debug.Log($"[CombatDebugListener] BattleEnded winner={signal.Winner} turn={signal.TurnIndex} reason={signal.Reason}");
+        }
+
+        private void OnStageCleared(StageCleared signal)
+        {
+            Debug.Log($"[CombatDebugListener] StageCleared stage={signal.StageIndex} rewardGold={signal.RewardGold} totalGold={signal.TotalGold}");
         }
     }
 }

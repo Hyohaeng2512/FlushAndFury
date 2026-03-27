@@ -15,5 +15,5 @@
 2. Relic Step
 3. Boon Step
 4. Defense Step
-5. Block Step
+5. Mitigation Step
 6. Finalize Step

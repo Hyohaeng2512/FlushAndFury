@@ -47,7 +47,7 @@ namespace FlushAndFury.Core.DI
                 new RelicStep(eventBus, relicRuleDatabase),
                 new BoonStep(),
                 new DefenseStep(eventBus),
-                new BlockStep(),
+                new MitigationStep(),
                 new FinalizeStep(),
             };
 

@@ -56,11 +56,6 @@ namespace FlushAndFury.Application.Combat
             eventBus?.Publish(new CombatBlockChanged("Enemy", EnemyBlock, "TurnStartEnemy"));
         }
 
-        public int GetEnemyBlock()
-        {
-            return EnemyBlock;
-        }
-
         public void ApplyPlayerCombatDamageToEnemy(int damage, string reason)
         {
             ApplyDamageToEnemy(damage, reason);

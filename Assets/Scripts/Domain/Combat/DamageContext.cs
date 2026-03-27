@@ -12,7 +12,7 @@ namespace FlushAndFury.Domain.Combat
     {
         public int BaseDamage { get; set; }
         public float CurrentDamage { get; set; }
-        public int TargetBlock { get; set; }
+        public int PipelineBlock { get; set; }
         public int FinalDamage { get; set; }
         public DamageType DamageType { get; set; }
         public bool IsImmune { get; set; }
@@ -36,11 +36,11 @@ namespace FlushAndFury.Domain.Combat
         public RelicContext Relic { get; set; }
         public BoonContext Boon { get; set; }
 
-        public DamageContext(int baseDamage, int targetBlock, DamageType damageType)
+        public DamageContext(int baseDamage, int pipelineBlock, DamageType damageType)
         {
             BaseDamage = baseDamage;
             CurrentDamage = baseDamage;
-            TargetBlock = targetBlock;
+            PipelineBlock = pipelineBlock;
             DamageType = damageType;
             CardBuff = new CardBuffContext();
             Relic = new RelicContext();

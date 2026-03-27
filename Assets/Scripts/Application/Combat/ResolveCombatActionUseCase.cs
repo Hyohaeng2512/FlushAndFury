@@ -15,7 +15,7 @@ namespace FlushAndFury.Application.Combat
         {
             DamageContext context = new DamageContext(
                 command.BaseDamage,
-                command.TargetBlock,
+                command.PipelineBlock,
                 command.DamageType
             );
 
