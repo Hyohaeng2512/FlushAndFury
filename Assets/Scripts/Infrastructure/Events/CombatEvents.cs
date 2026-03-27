@@ -321,4 +321,88 @@ namespace FlushAndFury.Infrastructure.Events
             TotalGold = totalGold;
         }
     }
+
+    public readonly struct MapStarted
+    {
+        public readonly int NodeCount;
+        public readonly string StartNodeId;
+
+        public MapStarted(int nodeCount, string startNodeId)
+        {
+            NodeCount = nodeCount;
+            StartNodeId = startNodeId;
+        }
+    }
+
+    public readonly struct MapNodeUnlocked
+    {
+        public readonly string NodeId;
+        public readonly string NodeType;
+
+        public MapNodeUnlocked(string nodeId, string nodeType)
+        {
+            NodeId = nodeId;
+            NodeType = nodeType;
+        }
+    }
+
+    public readonly struct MapNodeEntered
+    {
+        public readonly string NodeId;
+        public readonly string NodeType;
+
+        public MapNodeEntered(string nodeId, string nodeType)
+        {
+            NodeId = nodeId;
+            NodeType = nodeType;
+        }
+    }
+
+    public readonly struct MapAwaitingCombat
+    {
+        public readonly string NodeId;
+        public readonly string NodeType;
+
+        public MapAwaitingCombat(string nodeId, string nodeType)
+        {
+            NodeId = nodeId;
+            NodeType = nodeType;
+        }
+    }
+
+    public readonly struct MapNodeCleared
+    {
+        public readonly string NodeId;
+        public readonly string NodeType;
+        public readonly string Reason;
+
+        public MapNodeCleared(string nodeId, string nodeType, string reason)
+        {
+            NodeId = nodeId;
+            NodeType = nodeType;
+            Reason = reason;
+        }
+    }
+
+    public readonly struct MapRunFailed
+    {
+        public readonly string NodeId;
+        public readonly string Reason;
+
+        public MapRunFailed(string nodeId, string reason)
+        {
+            NodeId = nodeId;
+            Reason = reason;
+        }
+    }
+
+    public readonly struct MapCompleted
+    {
+        public readonly string BossNodeId;
+
+        public MapCompleted(string bossNodeId)
+        {
+            BossNodeId = bossNodeId;
+        }
+    }
 }

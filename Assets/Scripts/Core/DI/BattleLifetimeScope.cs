@@ -29,6 +29,8 @@ namespace FlushAndFury.Core.DI
             ResolveCombatActionUseCase = new ResolveCombatActionUseCase(combatCalculator);
             CombatStatusService combatStatusService = new CombatStatusService(eventBus);
             CombatHealthService combatHealthService = new CombatHealthService(eventBus, runProgressService);
+            IEncounterResolver encounterResolver = new EncounterResolver();
+            RunMapService runMapService = new RunMapService(eventBus, encounterResolver);
             EnemyActionExecutor enemyActionExecutor = new EnemyActionExecutor(eventBus, combatStatusService);
             EnemyTurnService enemyTurnService = new EnemyTurnService(rngService, eventBus, enemyActionExecutor, enemyIntentProfile);
             CombatTurnFlowService = new CombatTurnFlowService(ResolveCombatActionUseCase, enemyTurnService, combatStatusService, combatHealthService, runProgressService, eventBus, enemyMaxHp);
@@ -36,9 +38,16 @@ namespace FlushAndFury.Core.DI
             BattlePresenter presenter = FindAnyObjectByType<BattlePresenter>();
             presenter?.SetUseCase(ResolveCombatActionUseCase);
             presenter?.SetTurnFlowService(CombatTurnFlowService);
+            presenter?.SetMapService(runMapService);
 
             CombatDebugListener debugListener = FindAnyObjectByType<CombatDebugListener>();
             debugListener?.Bind(eventBus);
+
+            CombatRuntimeHud runtimeHud = FindAnyObjectByType<CombatRuntimeHud>();
+            runtimeHud?.Bind(eventBus, CombatTurnFlowService, runMapService);
+
+            MapRuntimeView mapView = FindAnyObjectByType<MapRuntimeView>();
+            mapView?.Bind(runMapService);
         }
     }
 }

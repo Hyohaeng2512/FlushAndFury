@@ -12,6 +12,7 @@ namespace FlushAndFury.Presentation.Battle
     {
         private ResolveCombatActionUseCase resolveCombatActionUseCase;
         private CombatTurnFlowService combatTurnFlowService;
+        private RunMapService runMapService;
 
         public void SetUseCase(ResolveCombatActionUseCase useCase)
         {
@@ -21,6 +22,44 @@ namespace FlushAndFury.Presentation.Battle
         public void SetTurnFlowService(CombatTurnFlowService turnFlowService)
         {
             combatTurnFlowService = turnFlowService;
+        }
+
+        public void SetMapService(RunMapService mapService)
+        {
+            runMapService = mapService;
+        }
+
+        public bool StartMapSession()
+        {
+            if (runMapService == null)
+            {
+                return false;
+            }
+
+            runMapService.StartMap();
+            return true;
+        }
+
+        public bool TryEnterMapNode(string nodeId)
+        {
+            if (runMapService == null)
+            {
+                return false;
+            }
+
+            return runMapService.TryEnterNode(nodeId);
+        }
+
+        public bool ResolvePendingMapCombat()
+        {
+            if (runMapService == null || combatTurnFlowService == null || !runMapService.IsAwaitingCombatResolution)
+            {
+                return false;
+            }
+
+            bool playerWon = RunAutoBattleUntilEnd($"MapNode_{runMapService.CurrentNodeId}");
+            runMapService.ResolveCurrentCombatEncounter(playerWon);
+            return playerWon;
         }
 
         [ContextMenu("Run Combat Demo")]
@@ -38,49 +77,57 @@ namespace FlushAndFury.Presentation.Battle
                 return;
             }
 
-            combatTurnFlowService.StartBattle();
-            const int maxTurns = 20;
+            bool playerWon = RunAutoBattleUntilEnd("TurnFlowDemo");
+            Debug.Log($"[BattlePresenter] Run Turn Flow Demo completed. PlayerWon={playerWon}");
+        }
+
+        [ContextMenu("Run Map Flow Demo")]
+        public void RunMapFlowDemo()
+        {
+            if (runMapService == null)
+            {
+                Debug.LogWarning("[BattlePresenter] RunMapService is not bound yet.");
+                return;
+            }
+
+            if (combatTurnFlowService == null)
+            {
+                Debug.LogWarning("[BattlePresenter] CombatTurnFlowService is not bound yet.");
+                return;
+            }
+
+            runMapService.StartMap();
+
+            const int maxNodes = 12;
             int safety = 0;
 
-            while (!combatTurnFlowService.IsBattleEnded && safety < maxTurns)
+            while (!runMapService.IsMapCompleted && !runMapService.IsRunFailed && safety < maxNodes)
             {
-                DamageContext playerResult = combatTurnFlowService.ResolvePlayerAction(CreateFullDemoCommand());
-                if (playerResult != null)
+                IReadOnlyList<FlushAndFury.Domain.Run.MapNodeState> available = runMapService.GetAvailableNextNodes();
+                if (available.Count <= 0)
                 {
-                    Debug.Log($"[BattlePresenter] Run Turn Flow Demo | Player Final Damage: {playerResult.FinalDamage} | DamageType: {playerResult.DamageType}");
-                }
-
-                combatTurnFlowService.EndPlayerTurn();
-                if (combatTurnFlowService.IsBattleEnded)
-                {
+                    Debug.LogWarning("[BattlePresenter] Map flow stopped: no available node.");
                     break;
                 }
 
-                combatTurnFlowService.EnterEnemyTurnStart();
-                if (combatTurnFlowService.IsBattleEnded)
+                string nextNodeId = available[0].NodeId;
+                bool entered = runMapService.TryEnterNode(nextNodeId);
+                if (!entered)
                 {
+                    Debug.LogWarning($"[BattlePresenter] Failed to enter node {nextNodeId}.");
                     break;
                 }
 
-                EnemyTurnResult enemyResult = combatTurnFlowService.ResolveEnemyTurn();
-                if (enemyResult != null)
+                if (runMapService.IsAwaitingCombatResolution)
                 {
-                    Debug.Log($"[BattlePresenter] Run Turn Flow Demo | Enemy Intent: {enemyResult.Intent.IntentType} | DamageToPlayer: {enemyResult.DamageToPlayer} | BlockGained: {enemyResult.BlockGained} | DebuffApplied: {enemyResult.DebuffApplied}");
+                    bool playerWon = RunAutoBattleUntilEnd($"MapNode_{nextNodeId}");
+                    runMapService.ResolveCurrentCombatEncounter(playerWon);
                 }
 
-                if (combatTurnFlowService.IsBattleEnded)
-                {
-                    break;
-                }
-
-                combatTurnFlowService.EndEnemyTurnAndAdvance();
                 safety += 1;
             }
 
-            if (!combatTurnFlowService.IsBattleEnded)
-            {
-                Debug.LogWarning($"[BattlePresenter] Run Turn Flow Demo stopped by safety limit ({maxTurns} turns).");
-            }
+            Debug.Log($"[BattlePresenter] Run Map Flow Demo finished. Completed={runMapService.IsMapCompleted} Failed={runMapService.IsRunFailed}");
         }
 
         [ContextMenu("Run Test: PhaseShifter")]
@@ -237,6 +284,61 @@ namespace FlushAndFury.Presentation.Battle
                     CombatModifierIds.RelicGamblersCoin,
                 },
             };
+        }
+
+        private bool RunAutoBattleUntilEnd(string label)
+        {
+            combatTurnFlowService.StartBattle();
+            const int maxTurns = 20;
+            int safety = 0;
+
+            while (!combatTurnFlowService.IsBattleEnded && safety < maxTurns)
+            {
+                DamageContext playerResult = combatTurnFlowService.ResolvePlayerAction(CreateFullDemoCommand());
+                if (playerResult != null)
+                {
+                    Debug.Log($"[BattlePresenter] {label} | Player Final Damage: {playerResult.FinalDamage} | DamageType: {playerResult.DamageType}");
+                }
+
+                if (combatTurnFlowService.IsBattleEnded)
+                {
+                    break;
+                }
+
+                combatTurnFlowService.EndPlayerTurn();
+                if (combatTurnFlowService.IsBattleEnded)
+                {
+                    break;
+                }
+
+                combatTurnFlowService.EnterEnemyTurnStart();
+                if (combatTurnFlowService.IsBattleEnded)
+                {
+                    break;
+                }
+
+                EnemyTurnResult enemyResult = combatTurnFlowService.ResolveEnemyTurn();
+                if (enemyResult != null)
+                {
+                    Debug.Log($"[BattlePresenter] {label} | Enemy Intent: {enemyResult.Intent.IntentType} | DamageToPlayer: {enemyResult.DamageToPlayer} | BlockGained: {enemyResult.BlockGained} | DebuffApplied: {enemyResult.DebuffApplied}");
+                }
+
+                if (combatTurnFlowService.IsBattleEnded)
+                {
+                    break;
+                }
+
+                combatTurnFlowService.EndEnemyTurnAndAdvance();
+                safety += 1;
+            }
+
+            if (!combatTurnFlowService.IsBattleEnded)
+            {
+                Debug.LogWarning($"[BattlePresenter] {label} stopped by safety limit ({maxTurns} turns).");
+                return false;
+            }
+
+            return combatTurnFlowService.State.Owner == TurnOwner.Player;
         }
 
         private void LogTestResult(string testName, bool pass, string details)

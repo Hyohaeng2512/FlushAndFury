@@ -352,7 +352,10 @@ Card → Empower Player → Attack
 ## Battle-Only State (reset theo battle/turn)
 
 -   Player/Enemy `Block`, `Defense`, combat status tạm thời là state trong battle\
--   Rule hiện tại giữ nguyên: Block xử lý trong pipeline combat và reset theo turn rule\
+-   Đã tách 2 lớp phòng thủ rõ ràng:\
+    - `Pipeline Mitigation` (giảm damage theo rule card/relic/enemy trong combat pipeline)\
+    - `Armor/Block hiện có` (trừ khi apply damage vào entity, giáp mất trước HP)\
+-   Rule hiện tại giữ nguyên: Armor/Block reset theo turn rule\
 -   Enemy chỉ cần state cốt lõi là `HP` (không cần giữ persist giữa node)
 
 ------------------------------------------------------------------------
@@ -361,9 +364,10 @@ Card → Empower Player → Attack
 
 ## Core Combat
 
-- [x] Pipeline combat: Card Buff -> Relic -> Boon -> Defense -> Block -> Finalize
+- [x] Pipeline combat: Card Buff -> Relic -> Boon -> Defense -> Mitigation -> Finalize
 - [x] Log theo từng step: CurrentDamage + DamageType
 - [x] Final damage floor/clamp theo công thức
+- [x] Tách riêng Pipeline Mitigation và Armor/Block apply vào HP
 
 ## Card / Relic / Enemy Rules
 
@@ -396,6 +400,11 @@ Card → Empower Player → Attack
 ## Pending Next Steps
 
 - [x] CombatHealthService: HP/Block apply thật cho player/enemy
-- [ ] Run-level persistent state service: PlayerHP + Gold xuyên map
-- [ ] BattleEnd/Reward flow cập nhật vào run state
-- [ ] HUD binding cho intent/status/hp (khi bắt đầu làm UI)
+- [x] Run-level persistent state service: PlayerHP + Gold xuyên map (`RunProgressService`)
+- [x] BattleEnd/Reward flow cập nhật vào run state (`BattleEnded`, `StageCleared`, +gold khi clear stage)
+- [x] Map flow v1: Node graph + path hợp lệ + lock/unlock node (`RunMapService`)
+- [x] Encounter resolver v1: Combat/Shop/Event/Boss theo node type (`EncounterResolver`)
+- [x] Node clear flow: complete node -> reward -> mở node kế tiếp
+- [x] Runtime HUD debug v1: hiển thị run/combat/map state để soi đồng bộ event-state
+- [x] Map runtime UI debug v1: xếp node + vẽ đường + click node + resolve combat
+- [ ] HUD binding cho intent/status/hp/map progress (khi bắt đầu làm UI)

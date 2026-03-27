@@ -41,7 +41,7 @@ namespace FlushAndFury.Application.Combat
 
         public void StartBattle()
         {
-            if (hasBattleStarted)
+            if (hasBattleStarted && !IsBattleEnded)
             {
                 Debug.LogWarning("[CombatTurnFlow] Battle already started. Restarting state.");
             }
@@ -234,6 +234,7 @@ namespace FlushAndFury.Application.Combat
         {
             State.Owner = winner;
             State.Phase = CombatTurnPhase.BattleEnd;
+            hasBattleStarted = false;
             LogState($"Battle ended ({winner})");
             eventBus?.Publish(new BattleEnded(winner.ToString(), State.TurnIndex, reason));
 

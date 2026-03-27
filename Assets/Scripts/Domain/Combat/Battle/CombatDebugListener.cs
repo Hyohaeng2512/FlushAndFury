@@ -60,6 +60,13 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Subscribe<CombatEntityDefeated>(OnCombatEntityDefeated);
             eventBus.Subscribe<BattleEnded>(OnBattleEnded);
             eventBus.Subscribe<StageCleared>(OnStageCleared);
+            eventBus.Subscribe<MapStarted>(OnMapStarted);
+            eventBus.Subscribe<MapNodeUnlocked>(OnMapNodeUnlocked);
+            eventBus.Subscribe<MapNodeEntered>(OnMapNodeEntered);
+            eventBus.Subscribe<MapAwaitingCombat>(OnMapAwaitingCombat);
+            eventBus.Subscribe<MapNodeCleared>(OnMapNodeCleared);
+            eventBus.Subscribe<MapRunFailed>(OnMapRunFailed);
+            eventBus.Subscribe<MapCompleted>(OnMapCompleted);
 
             isSubscribed = true;
         }
@@ -99,6 +106,13 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Unsubscribe<CombatEntityDefeated>(OnCombatEntityDefeated);
             eventBus.Unsubscribe<BattleEnded>(OnBattleEnded);
             eventBus.Unsubscribe<StageCleared>(OnStageCleared);
+            eventBus.Unsubscribe<MapStarted>(OnMapStarted);
+            eventBus.Unsubscribe<MapNodeUnlocked>(OnMapNodeUnlocked);
+            eventBus.Unsubscribe<MapNodeEntered>(OnMapNodeEntered);
+            eventBus.Unsubscribe<MapAwaitingCombat>(OnMapAwaitingCombat);
+            eventBus.Unsubscribe<MapNodeCleared>(OnMapNodeCleared);
+            eventBus.Unsubscribe<MapRunFailed>(OnMapRunFailed);
+            eventBus.Unsubscribe<MapCompleted>(OnMapCompleted);
 
             isSubscribed = false;
         }
@@ -241,6 +255,41 @@ namespace FlushAndFury.Presentation.Battle
         private void OnStageCleared(StageCleared signal)
         {
             Debug.Log($"[CombatDebugListener] StageCleared stage={signal.StageIndex} rewardGold={signal.RewardGold} totalGold={signal.TotalGold}");
+        }
+
+        private void OnMapStarted(MapStarted signal)
+        {
+            Debug.Log($"[CombatDebugListener] MapStarted nodes={signal.NodeCount} start={signal.StartNodeId}");
+        }
+
+        private void OnMapNodeUnlocked(MapNodeUnlocked signal)
+        {
+            Debug.Log($"[CombatDebugListener] MapNodeUnlocked node={signal.NodeId} type={signal.NodeType}");
+        }
+
+        private void OnMapNodeEntered(MapNodeEntered signal)
+        {
+            Debug.Log($"[CombatDebugListener] MapNodeEntered node={signal.NodeId} type={signal.NodeType}");
+        }
+
+        private void OnMapAwaitingCombat(MapAwaitingCombat signal)
+        {
+            Debug.Log($"[CombatDebugListener] MapAwaitingCombat node={signal.NodeId} type={signal.NodeType}");
+        }
+
+        private void OnMapNodeCleared(MapNodeCleared signal)
+        {
+            Debug.Log($"[CombatDebugListener] MapNodeCleared node={signal.NodeId} type={signal.NodeType} reason={signal.Reason}");
+        }
+
+        private void OnMapRunFailed(MapRunFailed signal)
+        {
+            Debug.Log($"[CombatDebugListener] MapRunFailed node={signal.NodeId} reason={signal.Reason}");
+        }
+
+        private void OnMapCompleted(MapCompleted signal)
+        {
+            Debug.Log($"[CombatDebugListener] MapCompleted bossNode={signal.BossNodeId}");
         }
     }
 }
