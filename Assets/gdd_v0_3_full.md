@@ -338,3 +338,64 @@ Card → Empower Player → Attack
 -   Combo-driven\
 -   Enemy ép adapt\
 -   Feedback mạnh, gây nghiện
+
+------------------------------------------------------------------------
+
+# 🧭 RUN PERSISTENCE RULE (UPDATE)
+
+## Player State Giữ Xuyên Map (giống Slay the Spire)
+
+-   Player chỉ giữ 2 chỉ số chính xuyên suốt map/run: `HP` và `Gold`\
+-   `HP` không reset sau mỗi combat, chỉ đổi theo damage/heal từ combat/event/relic\
+-   `Gold` giữ xuyên map, dùng cho shop/reward flow
+
+## Battle-Only State (reset theo battle/turn)
+
+-   Player/Enemy `Block`, `Defense`, combat status tạm thời là state trong battle\
+-   Rule hiện tại giữ nguyên: Block xử lý trong pipeline combat và reset theo turn rule\
+-   Enemy chỉ cần state cốt lõi là `HP` (không cần giữ persist giữa node)
+
+------------------------------------------------------------------------
+
+# ✅ IMPLEMENTATION CHECKLIST (CURRENT)
+
+## Core Combat
+
+- [x] Pipeline combat: Card Buff -> Relic -> Boon -> Defense -> Block -> Finalize
+- [x] Log theo từng step: CurrentDamage + DamageType
+- [x] Final damage floor/clamp theo công thức
+
+## Card / Relic / Enemy Rules
+
+- [x] Card rules v1: Enchant / Tag / Seal + event hook
+- [x] Relic rules v1: trigger theo condition + event hook
+- [x] Enemy defense rules v1: ShieldGuardian / MirrorBeast / PhaseShifter / CardThief / BurnDemon
+
+## Turn Flow / Intent
+
+- [x] Turn flow state machine: Player -> Enemy -> Next Turn
+- [x] Enemy intent telegraph
+- [x] Enemy intent consume event (`EnemyIntentConsumed`)
+- [x] Enemy action executor tách riêng (`EnemyActionExecutor`)
+- [x] Turn snapshot event/log
+- [x] Guard rails cho flow và enemy resolve
+
+## Status System
+
+- [x] Status system v1 cho Player + Enemy
+- [x] Stack / duration / tick cho Strength, Burn, Vulnerable, Weak
+- [x] Hook với `ApplyStatusToPlayerRequested` và `ApplyStatusToTargetRequested`
+
+## Data-Driven Content (SO)
+
+- [x] Card/Relic/Enemy chuyển sang ScriptableObject config
+- [x] Database + profile đã nối vào DI scope
+- [x] Có tool generate assets: `Tools > FlushAndFury > Generate Combat Data Assets`
+- [x] Có fallback hardcode khi chưa gán database/profile
+
+## Pending Next Steps
+
+- [ ] CombatHealthService: HP/Block apply thật cho player/enemy
+- [ ] Run-level persistent state service: PlayerHP + Gold xuyên map
+- [ ] BattleEnd/Reward flow cập nhật vào run state
+- [ ] HUD binding cho intent/status/hp (khi bắt đầu làm UI)

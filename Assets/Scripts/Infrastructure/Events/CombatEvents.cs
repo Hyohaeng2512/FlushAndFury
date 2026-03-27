@@ -233,4 +233,64 @@ namespace FlushAndFury.Infrastructure.Events
             Value = value;
         }
     }
+
+    public readonly struct RunStateChanged
+    {
+        public readonly int MaxHp;
+        public readonly int CurrentHp;
+        public readonly int Gold;
+        public readonly string Reason;
+
+        public RunStateChanged(int maxHp, int currentHp, int gold, string reason)
+        {
+            MaxHp = maxHp;
+            CurrentHp = currentHp;
+            Gold = gold;
+            Reason = reason;
+        }
+    }
+
+    public readonly struct CombatHealthChanged
+    {
+        public readonly string Side;
+        public readonly int CurrentHp;
+        public readonly int MaxHp;
+        public readonly int DamageTaken;
+        public readonly string Reason;
+
+        public CombatHealthChanged(string side, int currentHp, int maxHp, int damageTaken, string reason)
+        {
+            Side = side;
+            CurrentHp = currentHp;
+            MaxHp = maxHp;
+            DamageTaken = damageTaken;
+            Reason = reason;
+        }
+    }
+
+    public readonly struct CombatBlockChanged
+    {
+        public readonly string Side;
+        public readonly int CurrentBlock;
+        public readonly string Reason;
+
+        public CombatBlockChanged(string side, int currentBlock, string reason)
+        {
+            Side = side;
+            CurrentBlock = currentBlock;
+            Reason = reason;
+        }
+    }
+
+    public readonly struct CombatEntityDefeated
+    {
+        public readonly string Side;
+        public readonly string Reason;
+
+        public CombatEntityDefeated(string side, string reason)
+        {
+            Side = side;
+            Reason = reason;
+        }
+    }
 }

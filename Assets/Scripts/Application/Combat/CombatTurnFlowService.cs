@@ -9,17 +9,21 @@ namespace FlushAndFury.Application.Combat
         private readonly ResolveCombatActionUseCase resolveCombatActionUseCase;
         private readonly EnemyTurnService enemyTurnService;
         private readonly CombatStatusService statusService;
+        private readonly CombatHealthService healthService;
         private readonly IEventBus eventBus;
+        private readonly int enemyMaxHp;
         private bool hasBattleStarted;
 
         public CombatTurnState State { get; }
 
-        public CombatTurnFlowService(ResolveCombatActionUseCase useCase, EnemyTurnService enemyService, CombatStatusService combatStatusService, IEventBus bus)
+        public CombatTurnFlowService(ResolveCombatActionUseCase useCase, EnemyTurnService enemyService, CombatStatusService combatStatusService, CombatHealthService combatHealthService, IEventBus bus, int enemyHp)
         {
             resolveCombatActionUseCase = useCase;
             enemyTurnService = enemyService;
             statusService = combatStatusService;
+            healthService = combatHealthService;
             eventBus = bus;
+            enemyMaxHp = Mathf.Max(1, enemyHp);
             State = new CombatTurnState
             {
                 TurnIndex = 0,
@@ -37,6 +41,7 @@ namespace FlushAndFury.Application.Combat
 
             hasBattleStarted = true;
             statusService.ResetBattle();
+            healthService.StartBattle(enemyMaxHp);
             State.TurnIndex = 1;
             State.Owner = TurnOwner.Player;
             State.Phase = CombatTurnPhase.BattleStart;
@@ -56,6 +61,7 @@ namespace FlushAndFury.Application.Combat
             State.Owner = TurnOwner.Player;
             State.Phase = CombatTurnPhase.TurnStart;
             LogState("Player turn start");
+            healthService.ResetPlayerBlockForTurn();
             statusService.ProcessTurnStart(CombatSide.Player, State.TurnIndex);
 
             State.Phase = CombatTurnPhase.Input;
@@ -82,8 +88,14 @@ namespace FlushAndFury.Application.Combat
             command.CardFlatDamageBonus += statusService.GetOutgoingFlatBonus(CombatSide.Player, command.DamageType);
             command.BoonDamageMultiplier *= statusService.GetOutgoingMultiplier(CombatSide.Player);
             command.DefenseMultiplier *= statusService.GetIncomingMultiplier(CombatSide.Enemy);
+            command.TargetBlock = healthService.GetEnemyBlock();
 
             DamageContext result = resolveCombatActionUseCase.Execute(command);
+            if (result != null)
+            {
+                healthService.ApplyPlayerCombatDamageToEnemy(result.FinalDamage, "PlayerResolve");
+            }
+
             return result;
         }
 
@@ -108,9 +120,16 @@ namespace FlushAndFury.Application.Combat
                 return;
             }
 
+            if (!healthService.IsEnemyAlive || !healthService.IsPlayerAlive)
+            {
+                Debug.LogWarning("[CombatTurnFlow] Enemy turn start skipped because battle already has a defeated side.");
+                return;
+            }
+
             State.Owner = TurnOwner.Enemy;
             State.Phase = CombatTurnPhase.TurnStart;
             LogState("Enemy turn start");
+            healthService.ResetEnemyBlockForTurn();
             statusService.ProcessTurnStart(CombatSide.Enemy, State.TurnIndex);
         }
 
@@ -124,6 +143,12 @@ namespace FlushAndFury.Application.Combat
 
             State.Phase = CombatTurnPhase.Resolve;
             LogState("Enemy resolve phase");
+
+            if (!healthService.IsEnemyAlive || !healthService.IsPlayerAlive)
+            {
+                Debug.LogWarning("[CombatTurnFlow] Enemy resolve skipped because one side is defeated.");
+                return null;
+            }
 
             EnemyTurnResult result = enemyTurnService.ResolveTurn(State.TurnIndex);
             return result;

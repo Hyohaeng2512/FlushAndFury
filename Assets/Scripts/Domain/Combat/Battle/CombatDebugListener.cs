@@ -54,6 +54,10 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Subscribe<CombatStatusApplied>(OnCombatStatusApplied);
             eventBus.Subscribe<CombatStatusExpired>(OnCombatStatusExpired);
             eventBus.Subscribe<CombatStatusTickDamage>(OnCombatStatusTickDamage);
+            eventBus.Subscribe<RunStateChanged>(OnRunStateChanged);
+            eventBus.Subscribe<CombatHealthChanged>(OnCombatHealthChanged);
+            eventBus.Subscribe<CombatBlockChanged>(OnCombatBlockChanged);
+            eventBus.Subscribe<CombatEntityDefeated>(OnCombatEntityDefeated);
 
             isSubscribed = true;
         }
@@ -87,6 +91,10 @@ namespace FlushAndFury.Presentation.Battle
             eventBus.Unsubscribe<CombatStatusApplied>(OnCombatStatusApplied);
             eventBus.Unsubscribe<CombatStatusExpired>(OnCombatStatusExpired);
             eventBus.Unsubscribe<CombatStatusTickDamage>(OnCombatStatusTickDamage);
+            eventBus.Unsubscribe<RunStateChanged>(OnRunStateChanged);
+            eventBus.Unsubscribe<CombatHealthChanged>(OnCombatHealthChanged);
+            eventBus.Unsubscribe<CombatBlockChanged>(OnCombatBlockChanged);
+            eventBus.Unsubscribe<CombatEntityDefeated>(OnCombatEntityDefeated);
 
             isSubscribed = false;
         }
@@ -199,6 +207,26 @@ namespace FlushAndFury.Presentation.Battle
         private void OnCombatStatusTickDamage(CombatStatusTickDamage signal)
         {
             Debug.Log($"[CombatDebugListener] CombatStatusTickDamage side={signal.Side} status={signal.StatusId} damage={signal.Damage} turn={signal.TurnIndex}");
+        }
+
+        private void OnRunStateChanged(RunStateChanged signal)
+        {
+            Debug.Log($"[CombatDebugListener] RunStateChanged hp={signal.CurrentHp}/{signal.MaxHp} gold={signal.Gold} reason={signal.Reason}");
+        }
+
+        private void OnCombatHealthChanged(CombatHealthChanged signal)
+        {
+            Debug.Log($"[CombatDebugListener] CombatHealthChanged side={signal.Side} hp={signal.CurrentHp}/{signal.MaxHp} damage={signal.DamageTaken} reason={signal.Reason}");
+        }
+
+        private void OnCombatBlockChanged(CombatBlockChanged signal)
+        {
+            Debug.Log($"[CombatDebugListener] CombatBlockChanged side={signal.Side} block={signal.CurrentBlock} reason={signal.Reason}");
+        }
+
+        private void OnCombatEntityDefeated(CombatEntityDefeated signal)
+        {
+            Debug.Log($"[CombatDebugListener] CombatEntityDefeated side={signal.Side} reason={signal.Reason}");
         }
     }
 }
